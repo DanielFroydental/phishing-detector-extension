@@ -1,0 +1,31 @@
+{
+  "name": "phishguard-ai-extension",
+  "version": "1.0.0",
+  "description": "Chrome extension for real-time phishing detection using Google Gemini AI",
+  "scripts": {
+    "dev": "echo 'Load extension in Chrome Developer Mode from this directory'",
+    "package": "zip -r phishguard-ai-extension.zip . -x '*.git*' 'node_modules/*' '*.DS_Store' '*.md' 'package*.json'",
+    "clean": "rm -f *.zip && echo 'Cleaned build artifacts'",
+    "validate": "node -e \"console.log('🔍 Validating extension...'); const fs = require('fs'); const files = ['manifest.json', 'popup.html', 'src/popup.js', 'src/background.js', 'src/content.js']; files.forEach(f => { if(fs.existsSync(f)) console.log('✅', f); else console.log('❌', f); }); console.log('📋 Load this directory in Chrome Extensions (Developer Mode)');\"",
+    "start": "npm run dev"
+  },
+  "keywords": [
+    "chrome-extension",
+    "phishing-detection",
+    "security",
+    "ai",
+    "gemini",
+    "cybersecurity",
+    "phishguard"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/phishguard-ai-extension.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/phishguard-ai-extension/issues"
+  },
+  "homepage": "https://github.com/yourusername/phishguard-ai-extension#readme"
+}
