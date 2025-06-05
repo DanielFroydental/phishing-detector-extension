@@ -36,6 +36,20 @@ class PopupManager {
         });
         document.getElementById('scan-button').addEventListener('click', () => this.scanCurrentPage());
         document.getElementById('auto-scan-toggle').addEventListener('change', (e) => this.toggleAutoScan(e.target.checked));
+        
+        // Footer button event listeners
+        document.getElementById('settings-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.showSettings();
+        });
+        document.getElementById('help-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.showHelp();
+        });
+        document.getElementById('about-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.showAbout();
+        });
     }
 
     async saveApiKey() {
@@ -462,6 +476,216 @@ class PopupManager {
 
         const urlLower = url.toLowerCase();
         return !unscannable.some(scheme => urlLower.startsWith(scheme));
+    }
+
+    showSettings() {
+        // Create settings modal
+        this.createModal('Settings', `
+            <div class="settings-content">
+                <h4>Scanning Preferences</h4>
+                <div class="setting-item">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="modal-auto-scan" ${document.getElementById('auto-scan-toggle').checked ? 'checked' : ''}>
+                        <span class="slider"></span>
+                    </label>
+                    <span>Auto-scan suspicious pages</span>
+                </div>
+                
+                <div class="setting-item">
+                    <label for="confidence-threshold">Minimum confidence threshold:</label>
+                    <select id="confidence-threshold">
+                        <option value="60">60% - More alerts</option>
+                        <option value="70" selected>70% - Balanced</option>
+                        <option value="80">80% - Fewer alerts</option>
+                    </select>
+                </div>
+
+                <h4>API Configuration</h4>
+                <div class="setting-item">
+                    <label for="modal-api-key">Gemini API Key:</label>
+                    <input type="password" id="modal-api-key" placeholder="Enter your API key" value="${this.apiKey ? '••••••••••••••••' : ''}">
+                </div>
+
+                <h4>Data & Privacy</h4>
+                <div class="setting-item">
+                    <button id="clear-history-btn" class="secondary-button">Clear Scan History</button>
+                    <p class="help-text">Remove all stored scan results</p>
+                </div>
+            </div>
+        `, () => {
+            // Modal close callback - save settings
+            const autoScan = document.getElementById('modal-auto-scan').checked;
+            document.getElementById('auto-scan-toggle').checked = autoScan;
+            this.toggleAutoScan(autoScan);
+            
+            const newApiKey = document.getElementById('modal-api-key').value;
+            if (newApiKey && newApiKey !== '••••••••••••••••') {
+                document.getElementById('api-key').value = newApiKey;
+                this.saveApiKey();
+            }
+        });
+
+        // Add settings-specific event listeners
+        document.getElementById('clear-history-btn').addEventListener('click', () => {
+            this.clearScanHistory();
+        });
+    }
+
+    showHelp() {
+        this.createModal('Help & Support', `
+            <div class="help-content">
+                <h4>Getting Started</h4>
+                <ol>
+                    <li><strong>API Setup:</strong> Get your free API key from <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a></li>
+                    <li><strong>Manual Scan:</strong> Click "Analyze Page" to scan the current webpage</li>
+                    <li><strong>Auto-Scan:</strong> Enable to automatically scan suspicious pages</li>
+                    <li><strong>Context Menu:</strong> Right-click on any page and select "Scan page for phishing"</li>
+                </ol>
+
+                <h4>Understanding Results</h4>
+                <div class="result-explanation">
+                    <div class="verdict-example safe">✅ LEGITIMATE</div>
+                    <p>Website appears safe with high confidence</p>
+                    
+                    <div class="verdict-example suspicious">⚠️ SUSPICIOUS</div>
+                    <p>Website has some concerning elements - proceed with caution</p>
+                    
+                    <div class="verdict-example danger">🚨 PHISHING</div>
+                    <p>High likelihood of phishing - avoid entering personal information</p>
+                </div>
+
+                <h4>Tips for Safe Browsing</h4>
+                <ul>
+                    <li>Always verify URLs before entering sensitive information</li>
+                    <li>Look for HTTPS (secure) connections</li>
+                    <li>Be cautious of urgent or threatening messages</li>
+                    <li>When in doubt, navigate to the official website directly</li>
+                </ul>
+
+                <h4>Troubleshooting</h4>
+                <p><strong>Scan not working?</strong> Check your API key and internet connection</p>
+                <p><strong>False positives?</strong> AI analysis isn't perfect - use your judgment</p>
+                <p><strong>Slow scans?</strong> Large pages may take longer to analyze</p>
+
+                <h4>Contact Support</h4>
+                <p>Found a bug or have suggestions? <a href="mailto:support@phishguard.ai">Contact us</a></p>
+            </div>
+        `);
+    }
+
+    showAbout() {
+        this.createModal('About PhishGuard AI', `
+            <div class="about-content">
+                <div class="logo-section">
+                    <img src="icons/icon48.png" alt="PhishGuard AI" class="about-logo">
+                    <h3>PhishGuard AI</h3>
+                    <p class="version">Version 1.0.0</p>
+                </div>
+
+                <div class="description">
+                    <p>PhishGuard AI is a Chrome extension that uses Google's Gemini AI to detect phishing websites in real-time, helping protect you from online scams and malicious websites.</p>
+                </div>
+
+                <div class="features">
+                    <h4>Key Features</h4>
+                    <ul>
+                        <li>🔍 Real-time phishing detection</li>
+                        <li>🤖 Powered by Google Gemini AI</li>
+                        <li>⚡ Instant analysis results</li>
+                        <li>🛡️ Context menu scanning</li>
+                        <li>📱 Auto-scan capabilities</li>
+                        <li>📊 Detailed threat analysis</li>
+                    </ul>
+                </div>
+
+                <div class="privacy">
+                    <h4>Privacy & Security</h4>
+                    <p>Your privacy matters. PhishGuard AI:</p>
+                    <ul>
+                        <li>Only sends page content to Google's Gemini API for analysis</li>
+                        <li>Does not store or transmit personal data</li>
+                        <li>Your API key is stored locally in Chrome</li>
+                        <li>No tracking or analytics</li>
+                    </ul>
+                </div>
+
+                <div class="credits">
+                    <h4>Credits</h4>
+                    <p>Built with ❤️ using:</p>
+                    <ul>
+                        <li>Google Gemini AI</li>
+                        <li>Chrome Extensions API</li>
+                        <li>Modern web technologies</li>
+                    </ul>
+                </div>
+
+                <div class="legal">
+                    <p class="copyright">© 2025 PhishGuard AI. All rights reserved.</p>
+                    <p class="disclaimer">This tool is provided as-is. Always use your best judgment when browsing the web.</p>
+                </div>
+            </div>
+        `);
+    }
+
+    createModal(title, content, onClose = null) {
+        // Remove existing modal if any
+        const existingModal = document.querySelector('.modal-overlay');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Create modal HTML
+        const modalHTML = `
+            <div class="modal-overlay">
+                <div class="modal">
+                    <div class="modal-header">
+                        <h3>${title}</h3>
+                        <button class="modal-close">✕</button>
+                    </div>
+                    <div class="modal-body">
+                        ${content}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Add modal to page
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        // Add event listeners
+        const modal = document.querySelector('.modal-overlay');
+        const closeBtn = document.querySelector('.modal-close');
+
+        const closeModal = () => {
+            if (onClose) onClose();
+            modal.remove();
+        };
+
+        closeBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        // Close with Escape key
+        const handleKeyPress = (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', handleKeyPress);
+            }
+        };
+        document.addEventListener('keydown', handleKeyPress);
+    }
+
+    async clearScanHistory() {
+        try {
+            await chrome.storage.sync.set({ scanHistory: [] });
+            this.scanHistory = [];
+            this.loadScanHistory();
+            this.showNotification('Scan history cleared', 'success');
+        } catch (error) {
+            console.error('Error clearing history:', error);
+            this.showNotification('Failed to clear history', 'error');
+        }
     }
 }
 
