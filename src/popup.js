@@ -57,20 +57,20 @@ class PopupManager {
         const apiKey = apiKeyInput.value.trim();
 
         if (!apiKey || apiKey === '••••••••••••••••') {
-            this.showNotification('Please enter a valid API key', 'error');
+            this.showNotification('Please enter a valid API key', 'error', 4000);
             return;
         }
 
         const validation = this.validateApiKey(apiKey);
         if (!validation.valid) {
-            this.showNotification(validation.error, 'error');
+            this.showNotification(validation.error, 'error', 4000);
             return;
         }
 
         try {
             const testResult = await this.testApiKey(apiKey);
             if (!testResult.valid) {
-                this.showNotification(testResult.error, 'error');
+                this.showNotification(testResult.error, 'error', 4000);
                 return;
             }
 
@@ -81,7 +81,7 @@ class PopupManager {
             this.showNotification('API key saved successfully!', 'success');
         } catch (error) {
             console.error('Error saving API key:', error);
-            this.showNotification('Failed to save API key', 'error');
+            this.showNotification('Failed to save API key', 'error', 4000);
         }
     }
 
@@ -92,7 +92,7 @@ class PopupManager {
             this.showNotification(enabled ? 'Auto-scan enabled' : 'Auto-scan disabled', 'success');
         } catch (error) {
             console.error('Error toggling auto-scan:', error);
-            this.showNotification('Failed to update auto-scan setting', 'error');
+            this.showNotification('Failed to update auto-scan setting', 'error', 4000);
         }
     }
 
@@ -100,7 +100,7 @@ class PopupManager {
         if (this.isScanning) return;
 
         if (!this.apiKey) {
-            this.showNotification('Please set your Gemini API key first', 'error');
+            this.showNotification('Please set your Gemini API key first', 'error', 4000);
             return;
         }
 
@@ -115,13 +115,14 @@ class PopupManager {
             }
 
             if (!this.isScannableUrl(tab.url)) {
-                throw new Error('Cannot scan this type of page (chrome://, extensions, etc.)');
+                throw new Error('Cannot scan this type of page');
             }
 
             const response = await chrome.runtime.sendMessage({
                 action: 'scanPage',
                 tabId: tab.id,
-                url: tab.url
+                url: tab.url,
+                scanSource: 'popup'
             });
 
             if (response.error) {
@@ -145,7 +146,7 @@ class PopupManager {
                 errorMessage = `Scan failed: ${error.message}`;
             }
             
-            this.showNotification(errorMessage, 'error');
+            this.showNotification(errorMessage, 'error', 5000);
         } finally {
             this.isScanning = false;
             this.showLoading(false);
@@ -307,7 +308,7 @@ class PopupManager {
         } else {
             loadingSection.style.display = 'none';
             scanButton.disabled = !this.apiKey;
-            scanButton.innerHTML = '<span class="button-icon">🔍</span>Analyze Page';
+            scanButton.innerHTML = '<span class="button-icon">⚡</span>Analyze Page';
         }
     }
 
@@ -340,19 +341,19 @@ class PopupManager {
 
         if (verdict === 'phishing') {
             if (confidence > 80) {
-                badgeText = '🚨';
-                title = `⚠️ HIGH RISK: Phishing detected (${Math.round(confidence)}% confidence)`;
+                badgeText = '!';
+                title = `⚠ HIGH RISK: Phishing detected (${Math.round(confidence)}% confidence)`;
             } else {
-                badgeText = '⚠️';
-                title = `⚠️ RISK: Potential phishing (${Math.round(confidence)}% confidence)`;
+                badgeText = '⚠';
+                title = `⚠ RISK: Potential phishing (${Math.round(confidence)}% confidence)`;
             }
         } else if (verdict === 'legitimate') {
             if (confidence > 70) {
-                badgeText = '✅';
-                title = `✅ SAFE: Website is legitimate (${Math.round(confidence)}% confidence)`;
+                badgeText = '✓';
+                title = `✓ SAFE: Website is legitimate (${Math.round(confidence)}% confidence)`;
             } else {
-                badgeText = '⚠️';
-                title = `⚠️ CAUTION: Legitimate but low confidence (${Math.round(confidence)}%)`;
+                badgeText = '⚠';
+                title = `⚠ CAUTION: Legitimate but low confidence (${Math.round(confidence)}%)`;
             }
         } else {
             badgeText = '?';
@@ -386,6 +387,11 @@ class PopupManager {
         const container = document.querySelector('.container');
         container.appendChild(notification);
 
+        // Trigger slide-in animation
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 10);
+
         setTimeout(() => {
             if (notification.parentElement) {
                 notification.classList.add('fade-out');
@@ -400,10 +406,10 @@ class PopupManager {
 
     getNotificationIcon(type) {
         const icons = {
-            'info': 'ℹ️',
-            'success': '✅',
-            'warning': '⚠️',
-            'error': '🚨'
+            'info': 'ℹ',
+            'success': '✓',
+            'warning': '⚠',
+            'error': '!'
         };
         return icons[type] || icons['info'];
     }
@@ -684,7 +690,7 @@ class PopupManager {
             this.showNotification('Scan history cleared', 'success');
         } catch (error) {
             console.error('Error clearing history:', error);
-            this.showNotification('Failed to clear history', 'error');
+            this.showNotification('Failed to clear history', 'error', 4000);
         }
     }
 }
