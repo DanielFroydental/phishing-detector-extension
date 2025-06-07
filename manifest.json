@@ -24,7 +24,7 @@
     {
       "matches": ["<all_urls>"],
       "js": ["src/content.js"],
-      "css": ["css/styles.css", "css/animation-fix.css"],
+      "css": ["css/styles.css"],
       "run_at": "document_end"
     }
   ],

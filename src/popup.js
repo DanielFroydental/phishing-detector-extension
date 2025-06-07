@@ -18,10 +18,6 @@ class PopupManager {
             const result = await chrome.storage.sync.get(['geminiApiKey', 'autoScanEnabled', 'scanHistory']);
             this.apiKey = result.geminiApiKey || null;
             
-            if (this.apiKey) {
-                document.getElementById('api-key').value = '••••••••••••••••';
-            }
-            
             document.getElementById('auto-scan-toggle').checked = result.autoScanEnabled || false;
             this.scanHistory = result.scanHistory || [];
         } catch (error) {
@@ -30,10 +26,6 @@ class PopupManager {
     }
 
     setupEventListeners() {
-        document.getElementById('save-key').addEventListener('click', () => this.saveApiKey());
-        document.getElementById('api-key').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') this.saveApiKey();
-        });
         document.getElementById('scan-button').addEventListener('click', () => this.scanCurrentPage());
         document.getElementById('auto-scan-toggle').addEventListener('change', (e) => this.toggleAutoScan(e.target.checked));
         
@@ -274,7 +266,7 @@ class PopupManager {
             statusDot.style.backgroundColor = '#4CAF50';
         } else {
             scanButton.disabled = true;
-            statusText.textContent = 'API key required';
+            statusText.textContent = 'API key required - Configure in Settings';
             statusDot.style.backgroundColor = '#ff9800';
         }
     }
@@ -381,18 +373,12 @@ class PopupManager {
         notification.innerHTML = `
             <span class="notification-icon">${this.getNotificationIcon(type)}</span>
             <span class="notification-message">${message}</span>
-            <button class="notification-close" onclick="this.parentElement.remove()">✕</button>
+            <button class="notification-close">✕</button>
         `;
 
-        const container = document.querySelector('.container');
-        container.appendChild(notification);
-
-        // Trigger slide-in animation
-        setTimeout(() => {
-            notification.style.transform = 'translateX(0)';
-        }, 10);
-
-        setTimeout(() => {
+        // Add close button event listener
+        const closeButton = notification.querySelector('.notification-close');
+        const closeNotification = () => {
             if (notification.parentElement) {
                 notification.classList.add('fade-out');
                 setTimeout(() => {
@@ -401,6 +387,20 @@ class PopupManager {
                     }
                 }, 300);
             }
+        };
+        closeButton.addEventListener('click', closeNotification);
+
+        // Append to document body to avoid z-index stacking context issues
+        document.body.appendChild(notification);
+
+        // Trigger slide-in animation
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 10);
+
+        // Auto-hide after duration
+        setTimeout(() => {
+            closeNotification();
         }, duration);
     }
 
@@ -488,8 +488,19 @@ class PopupManager {
         // Create settings modal
         this.createModal('Settings', `
             <div class="settings-content">
-                <h4>Scanning Preferences</h4>
+                <h4>API Configuration</h4>
                 <div class="setting-item">
+                    <label for="modal-api-key">Gemini API Key:</label>
+                    <div class="input-group">
+                        <input type="password" id="modal-api-key" placeholder="Enter your API key" value="${this.apiKey ? '••••••••••••••••' : ''}">
+                        <button id="save-api-key-btn" class="primary-button">Save</button>
+                    </div>
+                    <div id="api-status" class="api-status">${this.apiKey ? '<span class="status-success">✓ API key configured</span>' : '<span class="status-error">⚠ API key not configured</span>'}</div>
+                    <p class="help-text">Get your API key from <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a></p>
+                </div>
+
+                <h4>Scanning Preferences</h4>
+                <div class="setting-item toggle-row">
                     <label class="toggle-switch">
                         <input type="checkbox" id="modal-auto-scan" ${document.getElementById('auto-scan-toggle').checked ? 'checked' : ''}>
                         <span class="slider"></span>
@@ -506,12 +517,6 @@ class PopupManager {
                     </select>
                 </div>
 
-                <h4>API Configuration</h4>
-                <div class="setting-item">
-                    <label for="modal-api-key">Gemini API Key:</label>
-                    <input type="password" id="modal-api-key" placeholder="Enter your API key" value="${this.apiKey ? '••••••••••••••••' : ''}">
-                </div>
-
                 <h4>Data & Privacy</h4>
                 <div class="setting-item">
                     <button id="clear-history-btn" class="secondary-button">Clear Scan History</button>
@@ -519,21 +524,64 @@ class PopupManager {
                 </div>
             </div>
         `, () => {
-            // Modal close callback - save settings
-            const autoScan = document.getElementById('modal-auto-scan').checked;
-            document.getElementById('auto-scan-toggle').checked = autoScan;
-            this.toggleAutoScan(autoScan);
+            // Modal close callback - save settings only if changed
+            const modalAutoScan = document.getElementById('modal-auto-scan').checked;
+            const currentAutoScan = document.getElementById('auto-scan-toggle').checked;
             
-            const newApiKey = document.getElementById('modal-api-key').value;
-            if (newApiKey && newApiKey !== '••••••••••••••••') {
-                document.getElementById('api-key').value = newApiKey;
-                this.saveApiKey();
+            if (modalAutoScan !== currentAutoScan) {
+                document.getElementById('auto-scan-toggle').checked = modalAutoScan;
+                this.toggleAutoScan(modalAutoScan);
             }
         });
 
         // Add settings-specific event listeners
         document.getElementById('clear-history-btn').addEventListener('click', () => {
             this.clearScanHistory();
+        });
+
+        // Add API key save functionality
+        document.getElementById('save-api-key-btn').addEventListener('click', async () => {
+            const apiKeyInput = document.getElementById('modal-api-key');
+            const apiKey = apiKeyInput.value.trim();
+
+            if (!apiKey || apiKey === '••••••••••••••••') {
+                this.showNotification('Please enter a valid API key', 'error', 4000);
+                return;
+            }
+
+            const validation = this.validateApiKey(apiKey);
+            if (!validation.valid) {
+                this.showNotification(validation.error, 'error', 4000);
+                return;
+            }
+
+            try {
+                const testResult = await this.testApiKey(apiKey);
+                if (!testResult.valid) {
+                    this.showNotification(testResult.error, 'error', 4000);
+                    return;
+                }
+
+                await chrome.storage.sync.set({ geminiApiKey: apiKey });
+                this.apiKey = apiKey;
+                apiKeyInput.value = '••••••••••••••••';
+                
+                // Update API status indicator
+                document.getElementById('api-status').innerHTML = '<span class="status-success">✓ API key configured and validated</span>';
+                
+                this.updateUI();
+                this.showNotification('API key saved successfully!', 'success');
+            } catch (error) {
+                console.error('Error saving API key:', error);
+                this.showNotification('Failed to save API key', 'error', 4000);
+            }
+        });
+
+        // Allow Enter key to save API key
+        document.getElementById('modal-api-key').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('save-api-key-btn').click();
+            }
         });
     }
 
@@ -684,13 +732,39 @@ class PopupManager {
 
     async clearScanHistory() {
         try {
+            // Show loading state on button
+            const clearButton = document.getElementById('clear-history-btn');
+            const originalText = clearButton.textContent;
+            clearButton.textContent = 'Clearing...';
+            clearButton.disabled = true;
+            
             await chrome.storage.sync.set({ scanHistory: [] });
             this.scanHistory = [];
             this.loadScanHistory();
-            this.showNotification('Scan history cleared', 'success');
+            
+            // Show success feedback
+            clearButton.textContent = '✓ Cleared';
+            clearButton.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+            clearButton.style.color = 'white';
+            
+            this.showNotification('Scan history cleared successfully', 'success');
+            
+            // Reset button after 2 seconds
+            setTimeout(() => {
+                clearButton.textContent = originalText;
+                clearButton.disabled = false;
+                clearButton.style.background = '';
+                clearButton.style.color = '';
+            }, 2000);
+            
         } catch (error) {
             console.error('Error clearing history:', error);
             this.showNotification('Failed to clear history', 'error', 4000);
+            
+            // Reset button on error
+            const clearButton = document.getElementById('clear-history-btn');
+            clearButton.textContent = 'Clear Scan History';
+            clearButton.disabled = false;
         }
     }
 }

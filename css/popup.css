@@ -262,8 +262,10 @@ main {
 /* Input Groups */
 .input-group {
     display: flex;
-    gap: 10px;
-    align-items: stretch;
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
 }
 
 .input-group input {
@@ -289,6 +291,17 @@ main {
 .input-group input::placeholder {
     color: #9ca3af;
     font-weight: 400;
+}
+
+.input-group input[type="password"] {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+}
+
+.input-group .primary-button {
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .input-group button {
@@ -317,20 +330,8 @@ main {
 .help-text {
     font-size: 12px;
     color: #6b7280;
-    margin-top: 10px;
-    line-height: 1.4;
-}
-
-.help-text a {
-    color: #6366f1;
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.2s;
-}
-
-.help-text a:hover {
-    color: #5856eb;
-    text-decoration: underline;
+    margin-top: 6px;
+    margin-bottom: 0;
 }
 
 /* Primary Button */
@@ -407,7 +408,7 @@ main {
 .toggle-switch {
     position: relative;
     display: inline-block;
-    width: 50px;
+    width: 52px;
     height: 28px;
 }
 
@@ -449,7 +450,7 @@ input:checked + .slider {
 }
 
 input:checked + .slider:before {
-    transform: translateX(22px);
+    transform: translateX(24px);
     box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -714,7 +715,7 @@ input:checked + .slider:before {
 
 .history-item:hover {
     transform: translateX(4px);
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .history-item .domain {
@@ -823,7 +824,7 @@ footer {
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 10000;
+    z-index: 99999; /* Higher than modal overlay (1000) to ensure visibility */
     display: flex;
     align-items: center;
     gap: 12px;
@@ -944,8 +945,10 @@ footer {
     background: white;
     border-radius: 16px;
     max-width: 520px;
+    width: 100%;
     max-height: 85vh;
     overflow-y: auto;
+    overflow-x: hidden;
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
     animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -1040,8 +1043,8 @@ footer {
 
 .setting-item {
     display: flex;
-    align-items: center;
-    gap: 16px;
+    flex-direction: column;
+    gap: 8px;
     margin-bottom: 20px;
     padding: 16px;
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
@@ -1057,8 +1060,19 @@ footer {
 
 .setting-item label {
     font-weight: 600;
-    min-width: 140px;
     color: #374151;
+    margin-bottom: 4px;
+}
+
+/* For toggle switches, use horizontal layout */
+.setting-item.toggle-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+}
+
+.setting-item.toggle-row label {
+    margin-bottom: 0;
 }
 
 .setting-item select {
@@ -1079,6 +1093,8 @@ footer {
 
 .setting-item input[type="password"] {
     flex: 1;
+    min-width: 0;
+    max-width: none;
     padding: 10px 14px;
     border: 2px solid #e5e7eb;
     border-radius: 8px;
@@ -1091,6 +1107,40 @@ footer {
     outline: none;
     border-color: #6366f1;
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* API Status Indicators */
+.api-status {
+    margin-top: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    width: 100%;
+}
+
+.status-success {
+    color: #059669;
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid #10b981;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(16, 185, 129, 0.1);
+}
+
+.status-error {
+    color: #dc2626;
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid #ef4444;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(239, 68, 68, 0.1);
 }
 
 /* Help Content */
@@ -1228,24 +1278,33 @@ footer {
     font-style: italic;
 }
 
-/* Secondary Button for Modal Actions */
+/* Secondary Button Improvements */
 .secondary-button {
-    background: linear-gradient(135deg, #6b7280, #4b5563);
-    color: white;
-    border: none;
-    padding: 10px 20px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    color: #374151;
+    border: 2px solid #e5e7eb;
+    padding: 10px 16px;
     border-radius: 8px;
-    cursor: pointer;
     font-size: 14px;
     font-weight: 600;
+    cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 4px rgba(107, 114, 128, 0.2);
+    text-align: center;
+    min-width: 140px;
 }
 
 .secondary-button:hover {
-    background: linear-gradient(135deg, #5a6268, #374151);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-color: #d1d5db;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.secondary-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
 /* Animations */
@@ -1294,6 +1353,36 @@ footer {
     .primary-button {
         padding: 14px 20px;
         font-size: 15px;
+    }
+}
+
+/* Modal Responsive Improvements */
+@media (max-width: 600px) {
+    .modal {
+        max-width: 90%;
+        margin: 20px;
+    }
+    
+    .modal-body {
+        padding: 16px;
+    }
+    
+    .modal-header {
+        padding: 16px 20px;
+    }
+    
+    .setting-item {
+        padding: 12px;
+    }
+    
+    .input-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .input-group .primary-button {
+        width: 100%;
     }
 }
 

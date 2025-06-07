@@ -17,7 +17,8 @@
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1) !important;
     /* Add transform for dropdown animation */
     transform: translateY(-100%) !important;
-    transition: transform 0.3s ease, opacity 0.3s ease !important;
+    transition: transform 0.5s cubic-bezier(0.17, 0.67, 0.24, 0.99), opacity 0.4s ease !important;
+    will-change: transform, opacity !important;
     border: none !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -49,10 +50,15 @@
     transform: translateY(0) !important;
 }
 
+.phishguard-banner.fade-out {
+    opacity: 0.7 !important;
+    transition: opacity 0.2s ease !important;
+}
+
 .phishguard-banner.auto-hiding {
     opacity: 0 !important;
     transform: translateY(-100%) !important;
-    transition: transform 0.3s ease, opacity 0.3s ease !important;
+    transition: transform 0.4s cubic-bezier(0.6, -0.28, 0.74, 0.05), opacity 0.3s ease !important;
 }
 
 /* Warning Banner (Red) */
@@ -79,7 +85,7 @@
     opacity: 0.3 !important;
 }
 
-/* Safe Banner (Green) */
+/* Safe Banner (Green) - Enhanced Version */
 .phishguard-banner.safe {
     background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%) !important;
     color: white !important;
@@ -101,6 +107,107 @@
     bottom: 0 !important;
     background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23ffffff" fill-opacity="0.05"><circle cx="30" cy="30" r="2"/></g></svg>') repeat !important;
     opacity: 0.3 !important;
+}
+
+/* New styles for improved legitimate banner */
+.phishguard-banner.safe .phishing-banner-content {
+    padding: 12px 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    max-width: 1200px !important;
+}
+
+.phishguard-banner.safe .phishing-banner-header {
+    margin-bottom: 0 !important;
+    flex: 1 !important;
+}
+
+.phishguard-banner.safe .phishing-banner-icon {
+    font-size: 20px !important;
+    width: 32px !important;
+    height: 32px !important;
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-right: 12px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.phishguard-banner.safe .phishing-banner-title strong {
+    font-size: 16px !important;
+    letter-spacing: 0 !important;
+    margin-bottom: 2px !important;
+    font-weight: 600 !important;
+}
+
+.phishguard-banner.safe .phishing-banner-subtitle {
+    font-size: 13px !important;
+    opacity: 0.85 !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.phishguard-banner.safe .phishing-banner-subtitle::before {
+    content: '•' !important;
+    margin-right: 5px !important;
+    font-size: 14px !important;
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.phishguard-banner.safe .phishing-banner-close {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+    font-size: 12px !important;
+    font-weight: normal !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    margin-left: 12px !important;
+    margin-right: 0 !important;
+}
+
+.phishguard-banner.safe .phishing-banner-close:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    transform: scale(1.05) !important;
+}
+
+/* Add pulsing animation for verified icon */
+@keyframes subtle-pulse {
+    0% { transform: scale(1); opacity: 0.9; }
+    50% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.9; }
+}
+
+.phishguard-banner.safe .phishing-banner-icon {
+    animation: subtle-pulse 2s infinite ease-in-out !important;
+}
+
+/* Add better check mark style */
+.phishguard-banner.safe .phishing-banner-icon {
+    position: relative !important;
+}
+
+.phishguard-banner.safe .phishing-banner-icon::after {
+    content: '✓' !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+}
+
+/* Add confidence indicator pill */
+.phishguard-banner.safe .confidence-pill {
+    background: rgba(255, 255, 255, 0.15) !important;
+    padding: 2px 8px !important;
+    border-radius: 12px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    margin-left: 6px !important;
+    white-space: nowrap !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 /* Suspicious Banner (Yellow/Orange) */
@@ -425,6 +532,35 @@
         top: 10px !important;
         max-width: calc(100vw - 20px) !important;
     }
+    
+    /* Responsive styles for safe banner */
+    .phishguard-banner.safe .phishing-banner-content {
+        flex-direction: column !important;
+        padding: 10px 16px !important;
+    }
+    
+    .phishguard-banner.safe .phishing-banner-header {
+        width: 100% !important;
+        margin-bottom: 0 !important;
+        flex-direction: row !important;
+        align-items: center !important;
+    }
+    
+    .phishguard-banner.safe .phishing-banner-close {
+        position: absolute !important;
+        top: 10px !important;
+        right: 10px !important;
+        margin-top: 0 !important;
+    }
+    
+    .phishguard-banner.safe .phishing-banner-subtitle {
+        flex-wrap: wrap !important;
+    }
+    
+    .phishguard-banner.safe .confidence-pill {
+        margin-top: 4px !important;
+        margin-left: 0 !important;
+    }
 }
 
 /* High contrast mode support */
@@ -468,4 +604,15 @@
     .phishing-notification {
         display: none !important;
     }
+}
+
+/* Ensure ID-based overrides work properly */
+#phishguard-warning.show,
+#phishguard-suspicious.show,
+#phishguard-safe.show {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+}
+#phishguard-safe.show {
+    transform: translateY(0) !important;
 }
