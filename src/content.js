@@ -52,12 +52,20 @@ class PhishGuardContent {
         banner.id = 'phishguard-warning';
         banner.className = 'phishguard-banner warning';
         banner.setAttribute('dir', 'ltr');
-        banner.style.cssText = 'direction: ltr !important; text-align: left !important; unicode-bidi: embed !important;';
+        banner.style.cssText = 'position: fixed !important; top: 0 !important; bottom: auto !important; left: 0 !important; right: 0 !important; z-index: 2147483647 !important; direction: ltr !important; text-align: left !important; unicode-bidi: embed !important;';
+        
+        // Force inline styles as attributes to ensure they take precedence
+        banner.style.setProperty('position', 'fixed', 'important');
+        banner.style.setProperty('top', '0', 'important');
+        banner.style.setProperty('bottom', 'auto', 'important');
+        banner.style.setProperty('left', '0', 'important');
+        banner.style.setProperty('right', '0', 'important');
+        banner.style.setProperty('z-index', '2147483647', 'important');
         
         banner.innerHTML = `
             <div class="phishing-banner-content" dir="ltr" style="direction: ltr !important; text-align: left !important;">
                 <div class="phishing-banner-header" dir="ltr" style="direction: ltr !important; display: flex !important; flex-direction: row !important;">
-                    <div class="phishing-banner-icon" style="order: 1 !important;">⚠️</div>
+                    <div class="phishing-banner-icon" style="order: 1 !important;">!</div>
                     <div class="phishing-banner-title" style="order: 2 !important; text-align: left !important;">
                         <strong>PHISHING WEBSITE DETECTED</strong>
                         <div class="phishing-banner-subtitle">
@@ -80,7 +88,7 @@ class PhishGuardContent {
                 </div>
                 
                 <div class="phishing-banner-actions" style="direction: ltr !important; display: flex !important; flex-direction: row !important;">
-                    <button class="phishing-action-btn danger" onclick="window.history.back()">🔙 Go Back</button>
+                    <button class="phishing-action-btn danger" onclick="window.history.back()">← Go Back</button>
                     <button class="phishing-action-btn secondary" onclick="this.closest('.phishguard-banner').remove()">Continue Anyway</button>
                 </div>
             </div>
@@ -89,14 +97,24 @@ class PhishGuardContent {
         document.body.appendChild(banner);
         this.currentBanner = banner;
 
-        setTimeout(() => banner.classList.add('show'), 100);
+        setTimeout(() => {
+            // Add the show class to trigger the animation
+            banner.classList.add('show');
+            
+            // Reinforce only positioning, not transform
+            banner.style.setProperty('position', 'fixed', 'important');
+            banner.style.setProperty('z-index', '2147483647', 'important');
+        }, 10); // Use a shorter delay for smoother animation
 
+        // Auto-hide after 15 seconds
         setTimeout(() => {
             if (banner.parentNode && !banner.classList.contains('user-interacted')) {
+                // Add the auto-hiding class to trigger the slide-up animation
                 banner.classList.add('auto-hiding');
+                // Remove after animation completes
                 setTimeout(() => {
                     if (banner.parentNode) banner.remove();
-                }, 300);
+                }, 500); // Match the transition duration in CSS
             }
         }, 15000);
 
@@ -110,12 +128,20 @@ class PhishGuardContent {
         banner.id = 'phishguard-suspicious';
         banner.className = 'phishguard-banner suspicious';
         banner.setAttribute('dir', 'ltr');
-        banner.style.cssText = 'direction: ltr !important; text-align: left !important; unicode-bidi: embed !important;';
+        banner.style.cssText = 'position: fixed !important; top: 0 !important; bottom: auto !important; left: 0 !important; right: 0 !important; z-index: 2147483647 !important; direction: ltr !important; text-align: left !important; unicode-bidi: embed !important;';
+        
+        // Force inline styles as attributes to ensure they take precedence
+        banner.style.setProperty('position', 'fixed', 'important');
+        banner.style.setProperty('top', '0', 'important');
+        banner.style.setProperty('bottom', 'auto', 'important');
+        banner.style.setProperty('left', '0', 'important');
+        banner.style.setProperty('right', '0', 'important');
+        banner.style.setProperty('z-index', '2147483647', 'important');
         
         banner.innerHTML = `
             <div class="phishing-banner-content" dir="ltr" style="direction: ltr !important; text-align: left !important;">
                 <div class="phishing-banner-header" dir="ltr" style="direction: ltr !important; display: flex !important; flex-direction: row !important;">
-                    <div class="phishing-banner-icon" style="order: 1 !important;">⚠️</div>
+                    <div class="phishing-banner-icon" style="order: 1 !important;">⚠</div>
                     <div class="phishing-banner-title" style="order: 2 !important; text-align: left !important;">
                         <strong>Suspicious Website Detected</strong>
                         <div class="phishing-banner-subtitle">
@@ -141,7 +167,7 @@ class PhishGuardContent {
                 
                 <div class="phishing-banner-actions" style="direction: ltr !important; display: flex !important; flex-direction: row !important;">
                     <button class="phishing-action-btn warning" onclick="window.history.back()">
-                        🔙 Go Back
+                        ← Go Back
                     </button>
                     <button class="phishing-action-btn secondary" onclick="this.closest('.phishguard-banner').remove()">
                         Continue with Caution
@@ -155,18 +181,25 @@ class PhishGuardContent {
 
         // Animate in
         setTimeout(() => {
+            // Add the show class to trigger the animation
             banner.classList.add('show');
-        }, 100);
+            
+            // Reinforce only positioning, not transform
+            banner.style.setProperty('position', 'fixed', 'important');
+            banner.style.setProperty('z-index', '2147483647', 'important');
+        }, 10); // Use a shorter delay for smoother animation
 
         // Auto-hide after 10 seconds (longer than safe, shorter than phishing)
         setTimeout(() => {
             if (banner.parentNode && !banner.classList.contains('user-interacted')) {
+                // Add the auto-hiding class to trigger the slide-up animation
                 banner.classList.add('auto-hiding');
+                // Remove after animation completes
                 setTimeout(() => {
                     if (banner.parentNode) {
                         banner.remove();
                     }
-                }, 300);
+                }, 500); // Match the transition duration in CSS
             }
         }, 10000);
 
@@ -182,19 +215,36 @@ class PhishGuardContent {
         banner.id = 'phishguard-safe';
         banner.className = 'phishguard-banner safe';
         banner.setAttribute('dir', 'ltr');
-        banner.style.cssText = 'direction: ltr !important; text-align: left !important; unicode-bidi: embed !important;';
+        banner.style.cssText = 'position: fixed !important; top: 0 !important; bottom: auto !important; left: 0 !important; right: 0 !important; z-index: 2147483647 !important; direction: ltr !important; text-align: left !important; unicode-bidi: embed !important;';
+        
+        // Force inline styles as attributes to ensure they take precedence
+        banner.style.setProperty('position', 'fixed', 'important');
+        banner.style.setProperty('top', '0', 'important');
+        banner.style.setProperty('bottom', 'auto', 'important');
+        banner.style.setProperty('left', '0', 'important');
+        banner.style.setProperty('right', '0', 'important');
+        banner.style.setProperty('z-index', '2147483647', 'important');
+        
+        // Get the current domain and HTTPS status
+        const domain = window.location.hostname;
+        const isSecure = window.location.protocol === 'https:';
         
         banner.innerHTML = `
             <div class="phishing-banner-content safe-content" dir="ltr" style="direction: ltr !important; text-align: left !important;">
                 <div class="phishing-banner-header" dir="ltr" style="direction: ltr !important; display: flex !important; flex-direction: row !important;">
-                    <div class="phishing-banner-icon" style="order: 1 !important;">✅</div>
+                    <div class="phishing-banner-icon" style="order: 1 !important;"></div>
                     <div class="phishing-banner-title" style="order: 2 !important; text-align: left !important;">
                         <strong>Website appears legitimate</strong>
                         <div class="phishing-banner-subtitle">
-                            Scanned by PhishGuard AI (${Math.round(result.confidence)}% confidence)
+                            Scanned by PhishGuard AI <span class="confidence-pill">${Math.round(result.confidence)}% confidence</span>
+                        </div>
+                        <div class="site-info" style="margin-top: 4px; font-size: 12px; opacity: 0.85; display: flex; align-items: center; gap: 5px;">
+                            <span style="color: ${isSecure ? '#a7f3d0' : '#fcd34d'};">${isSecure ? '🔒 Secure' : '⚠️ Not Secure'}</span>
+                            <span style="margin: 0 4px;">•</span>
+                            <span style="font-weight: 600; overflow: hidden; text-overflow: ellipsis; max-width: 250px; white-space: nowrap;">${domain}</span>
                         </div>
                     </div>
-                    <button class="phishing-banner-close" style="order: 3 !important;" onclick="this.closest('.phishguard-banner').remove()">
+                    <button class="phishing-banner-close" style="order: 3 !important;" id="safe-banner-close">
                         ✕
                     </button>
                 </div>
@@ -204,22 +254,45 @@ class PhishGuardContent {
         document.body.appendChild(banner);
         this.currentBanner = banner;
 
+        // Add click event listener for the close button
+        const closeButton = banner.querySelector('#safe-banner-close');
+        closeButton.addEventListener('click', () => {
+            banner.classList.add('auto-hiding');
+            setTimeout(() => {
+                if (banner.parentNode) {
+                    banner.remove();
+                }
+            }, 300);
+        });
+
         // Animate in
         setTimeout(() => {
+            // Add the show class to trigger the animation
             banner.classList.add('show');
-        }, 100);
-
-        // Auto-hide after 5 seconds
+            
+            // Reinforce only positioning, not transform
+            banner.style.setProperty('position', 'fixed', 'important');
+            banner.style.setProperty('z-index', '2147483647', 'important');
+        }, 10); // Use a shorter delay for smoother animation
+        
+        // Auto-hide after 5 seconds with proper slide-up animation
         setTimeout(() => {
-            if (banner.parentNode) {
+            if (banner.parentNode && !banner.classList.contains('user-interacted')) {
+                // Remove fade-out class and directly trigger slide-up animation
                 banner.classList.add('auto-hiding');
+                // Remove after animation completes
                 setTimeout(() => {
                     if (banner.parentNode) {
                         banner.remove();
                     }
-                }, 300);
+                }, 400); // Match the CSS transition duration
             }
         }, 5000);
+        
+        // Add event listener to prevent auto-hide when user interacts with the banner
+        banner.addEventListener('mouseenter', () => {
+            banner.classList.add('user-interacted');
+        });
     }
 
     removeBanner() {
@@ -448,7 +521,7 @@ class PhishGuardContent {
         
         notification.innerHTML = `
             <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 16px;">${type === 'error' ? '🚨' : 'ℹ️'}</span>
+                <span style="font-size: 16px;">${type === 'error' ? '!' : 'ℹ'}</span>
                 <span>${message}</span>
                 <button onclick="this.closest('.phishguard-notification').remove()" 
                         style="margin-left: auto; background: none; border: none; color: white; cursor: pointer; font-size: 18px; padding: 0;">✕</button>

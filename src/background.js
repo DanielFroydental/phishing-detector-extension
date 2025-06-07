@@ -91,41 +91,14 @@ class PhishGuardBackground {
                 if (!this.isScannableUrl(tab.url)) {
                     chrome.tabs.sendMessage(tab.id, {
                         action: 'showNotification',
-                        message: 'Cannot scan this type of page (chrome://, extensions, etc.)',
+                        message: 'Cannot scan this type of page',
                         type: 'error'
                     });
                     return;
                 }
 
                 // Perform the scan
-                const result = await this.scanPage(tab.id, tab.url);
-                
-                // Always show the result popup via content script banner
-                if (result.verdict.toLowerCase() === 'phishing') {
-                    chrome.tabs.sendMessage(tab.id, {
-                        action: 'showPhishingWarning',
-                        result: result
-                    });
-                } else if (result.verdict.toLowerCase() === 'legitimate' && result.confidence < 70) {
-                    // Treat low confidence legitimate sites as suspicious
-                    chrome.tabs.sendMessage(tab.id, {
-                        action: 'showSuspiciousWarning',
-                        result: {
-                            ...result,
-                            verdict: 'Suspicious',
-                            reasoning: [
-                                'Website appears legitimate but with low confidence',
-                                ...result.reasoning
-                            ]
-                        }
-                    });
-                } else {
-                    // High confidence legitimate sites
-                    chrome.tabs.sendMessage(tab.id, {
-                        action: 'showSafeIndicator',
-                        result: result
-                    });
-                }
+                const result = await this.scanPage(tab.id, tab.url, 'contextMenu');
 
             } catch (error) {
                 console.error('Error scanning page from context menu:', error);
@@ -142,7 +115,7 @@ class PhishGuardBackground {
         try {
             switch (request.action) {
                 case 'scanPage':
-                    const result = await this.scanPage(request.tabId, request.url);
+                    const result = await this.scanPage(request.tabId, request.url, request.scanSource || 'popup');
                     sendResponse({ result });
                     break;
                 case 'toggleAutoScan':
@@ -167,7 +140,7 @@ class PhishGuardBackground {
         
         if (this.isScannableUrl(tab.url) && this.isSuspiciousDomain(tab.url)) {
             try {
-                await this.scanPage(tabId, tab.url);
+                await this.scanPage(tabId, tab.url, 'autoScan');
             } catch (error) {
                 console.error('Auto-scan failed:', error);
             }
@@ -189,7 +162,7 @@ class PhishGuardBackground {
         }
     }
 
-    async scanPage(tabId, url) {
+    async scanPage(tabId, url, scanSource = 'popup') {
         try {
             if (!this.geminiApiKey) {
                 throw new Error('API key not configured');
@@ -205,10 +178,47 @@ class PhishGuardBackground {
             this.scannedTabs.set(tabId, result);
             this.updateBadge(tabId, result);
             
-            if (result.verdict.toLowerCase() === 'phishing' && result.confidence >= 80) {
-                await this.showPhishingWarning(tabId, result);
-            } else if (result.verdict.toLowerCase() === 'legitimate' && result.confidence < 70) {
-                await this.showUncertainWarning(tabId, result);
+            // Send content script messages based on scan source
+            if (scanSource === 'contextMenu') {
+                // Right-click scan: Always show banners
+                if (result.verdict.toLowerCase() === 'phishing') {
+                    await this.sendContentScriptMessage(tabId, 'showPhishingWarning', result);
+                } else if (result.verdict.toLowerCase() === 'legitimate' && result.confidence < 70) {
+                    // Treat low confidence legitimate sites as suspicious
+                    await this.sendContentScriptMessage(tabId, 'showSuspiciousWarning', {
+                        ...result,
+                        verdict: 'Suspicious',
+                        reasoning: [
+                            'Website appears legitimate but with low confidence',
+                            ...result.reasoning
+                        ]
+                    });
+                } else {
+                    // High confidence legitimate sites
+                    await this.sendContentScriptMessage(tabId, 'showSafeIndicator', result);
+                }
+            } else if (scanSource === 'popup') {
+                // Popup scan: Only show banners for high-confidence phishing
+                if (result.verdict.toLowerCase() === 'phishing' && result.confidence >= 80) {
+                    await this.sendContentScriptMessage(tabId, 'showPhishingWarning', result);
+                }
+                // Note: No banners for low-confidence legitimate sites or safe sites in popup mode
+            } else if (scanSource === 'autoScan') {
+                // Auto-scan: Only show warnings for threats, not confirmations for safe sites
+                if (result.verdict.toLowerCase() === 'phishing') {
+                    await this.sendContentScriptMessage(tabId, 'showPhishingWarning', result);
+                } else if (result.verdict.toLowerCase() === 'legitimate' && result.confidence < 70) {
+                    // Show warning banner for low-confidence legitimate sites
+                    await this.sendContentScriptMessage(tabId, 'showSuspiciousWarning', {
+                        ...result,
+                        verdict: 'Suspicious',
+                        reasoning: [
+                            'Website appears legitimate but with low confidence',
+                            ...result.reasoning
+                        ]
+                    });
+                }
+                // Note: Auto-scan doesn't show "safe" banners to avoid interrupting normal browsing
             }
 
             return result;
@@ -568,26 +578,33 @@ Return ONLY this JSON:
         return !unscannable.some(scheme => urlLower.startsWith(scheme));
     }
 
-    async showPhishingWarning(tabId, result) {
+    async sendContentScriptMessage(tabId, action, result) {
         try {
             await chrome.tabs.sendMessage(tabId, {
-                action: 'showPhishingWarning',
+                action: action,
                 result: result
             });
         } catch (error) {
-            console.log('Could not inject warning banner:', error);
+            console.log('Could not send content script message:', error);
         }
     }
 
+    async showPhishingWarning(tabId, result) {
+        // Legacy function - use sendContentScriptMessage instead
+        await this.sendContentScriptMessage(tabId, 'showPhishingWarning', result);
+    }
+
     async showUncertainWarning(tabId, result) {
-        try {
-            await chrome.tabs.sendMessage(tabId, {
-                action: 'showSafeIndicator',
-                result: result
-            });
-        } catch (error) {
-            console.log('Could not inject safe indicator:', error);
-        }
+        // Legacy function - use sendContentScriptMessage instead
+        // Fixed to show suspicious warning instead of safe indicator
+        await this.sendContentScriptMessage(tabId, 'showSuspiciousWarning', {
+            ...result,
+            verdict: 'Suspicious',
+            reasoning: [
+                'Website appears legitimate but with low confidence',
+                ...result.reasoning
+            ]
+        });
     }
 
     updateBadge(tabId, result) {
@@ -598,14 +615,14 @@ Return ONLY this JSON:
         let badgeColor = '';
 
         if (verdict === 'phishing') {
-            badgeText = confidence > 80 ? '🚨' : '⚠️';
-            badgeColor = '#f44336';
+            badgeText = confidence > 80 ? '!' : '⚠';
+            badgeColor = confidence > 80 ? '#dc2626' : '#f59e0b';
         } else if (verdict === 'legitimate') {
-            badgeText = confidence > 70 ? '✅' : '⚠️';
-            badgeColor = confidence > 70 ? '#4CAF50' : '#ff9800';
+            badgeText = confidence > 70 ? '✓' : '?';
+            badgeColor = confidence > 70 ? '#10b981' : '#f59e0b';
         } else {
-            badgeText = '?';
-            badgeColor = '#757575';
+            badgeText = '';
+            badgeColor = '#6b7280';
         }
 
         chrome.action.setBadgeText({ tabId: tabId, text: badgeText });
